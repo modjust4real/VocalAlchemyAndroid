@@ -52,3 +52,56 @@ jobs:
           path: app/build/reports/tests/testDebugUnitTest
           if-no-files-found: ignore
           retention-days: 14
+
+  emulator-smoke:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: Mixora-debug-apk
+          path: apk
+
+      - name: Install and launch in Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r apk/app-debug.apk
+            adb shell am force-stop com.modjust4real.mixora
+            adb shell am start -W -n com.modjust4real.mixora/.MainActivity
+            sleep 3
+            adb shell pidof com.modjust4real.mixora
+            adb exec-out screencap -p > mixora-home.png
+            adb shell uiautomator dump /sdcard/mixora-window.xml
+            adb pull /sdcard/mixora-window.xml mixora-window.xml
+            grep -q "MIXORA" mixora-window.xml
+            adb logcat -d -t 400 > mixora-logcat.txt
+            if grep -q "FATAL EXCEPTION.*com.modjust4real.mixora" mixora-logcat.txt; then exit 1; fi
+
+      - name: Upload emulator evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mixora-emulator-evidence
+          path: |
+            mixora-home.png
+            mixora-window.xml
+            mixora-logcat.txt
+          if-no-files-found: ignore
+          retention-days: 14
