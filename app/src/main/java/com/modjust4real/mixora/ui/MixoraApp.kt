@@ -50,6 +50,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -58,6 +59,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -115,50 +117,52 @@ fun MixoraApp() {
 
     BackHandler(enabled = screen != Screen.HOME) { screenName = Screen.HOME.name }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(Color(0xFF120B1C), Ink, Color(0xFF080A10))
+    CompositionLocalProvider(LocalContentColor provides Color.White) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0xFF120B1C), Ink, Color(0xFF080A10))
+                    )
                 )
-            )
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .imePadding()
-    ) {
-        when (screen) {
-            Screen.HOME -> HomeScreen(
-                onMix = { screenName = Screen.MIX.name },
-                onPreset = { screenName = Screen.PRESET.name },
-                onLive = { livePreset = presets.firstOrNull(); screenName = Screen.LIVE.name },
-                presetCount = presets.size
-            )
-            Screen.MIX -> MixScreen(
-                presets = presets,
-                onBack = { screenName = Screen.HOME.name }
-            )
-            Screen.PRESET -> PresetScreen(
-                presets = presets,
-                onBack = { screenName = Screen.HOME.name },
-                onSave = { preset ->
-                    store.save(preset)
-                    presets = store.load()
-                },
-                onDelete = { id ->
-                    store.delete(id)
-                    presets = store.load()
-                },
-                onTest = { preset ->
-                    livePreset = preset
-                    screenName = Screen.LIVE.name
-                }
-            )
-            Screen.LIVE -> LiveTestScreen(
-                presets = presets,
-                initialPreset = livePreset,
-                onBack = { screenName = Screen.HOME.name }
-            )
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .imePadding()
+        ) {
+            when (screen) {
+                Screen.HOME -> HomeScreen(
+                    onMix = { screenName = Screen.MIX.name },
+                    onPreset = { screenName = Screen.PRESET.name },
+                    onLive = { livePreset = presets.firstOrNull(); screenName = Screen.LIVE.name },
+                    presetCount = presets.size
+                )
+                Screen.MIX -> MixScreen(
+                    presets = presets,
+                    onBack = { screenName = Screen.HOME.name }
+                )
+                Screen.PRESET -> PresetScreen(
+                    presets = presets,
+                    onBack = { screenName = Screen.HOME.name },
+                    onSave = { preset ->
+                        store.save(preset)
+                        presets = store.load()
+                    },
+                    onDelete = { id ->
+                        store.delete(id)
+                        presets = store.load()
+                    },
+                    onTest = { preset ->
+                        livePreset = preset
+                        screenName = Screen.LIVE.name
+                    }
+                )
+                Screen.LIVE -> LiveTestScreen(
+                    presets = presets,
+                    initialPreset = livePreset,
+                    onBack = { screenName = Screen.HOME.name }
+                )
+            }
         }
     }
 }
